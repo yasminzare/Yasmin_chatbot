@@ -1,10 +1,11 @@
 [project]
 name = "poetry-yasminchat"
 version = "0.1.0"
-description = ""
+description = "chatbot that includes sources"
 authors = [
-    {name = "Yasmin Zare Mehjerdi",email = "yzaremeh@umd.edu"}
+    {name = "y"}
 ]
+license = {text = "n"}
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
@@ -14,3 +15,8 @@ dependencies = [
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.4"
+mypy = "^1.14.1"
+
