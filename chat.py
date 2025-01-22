@@ -3,10 +3,8 @@ from dotenv import load_dotenv
 from typing import Annotated
 from typing_extensions import TypedDict
 from langsmith import traceable
-from langchain_openai import ChatOpenAI
 from tavily import TavilyClient
-from langchain.adapters.openai import convert_openai_messages
-from langchain_community.chat_models import ChatOpenAI
+from langchain_openai import ChatOpenAI
 
 
 load_dotenv()
@@ -22,7 +20,7 @@ for var in required_env_vars:
 
 client = TavilyClient(api_key= os.environ["TAVILY_API_KEY"])
 
-llm = ChatOpenAI(temperature=0, model_name="gpt-4o")
+llm = ChatOpenAI(temperature=0, model_name="gpt-4")
 
 class State(TypedDict):
     messages: Annotated[list, "List of message dictionaries for LLM"]
@@ -48,7 +46,7 @@ def tavilliy_search(subject: str):
         content = client.search(subject, search_depth="advanced")["results"]
         return content  # You may need to access specific fields in the response object
     except Exception as e:
-        raise RuntimeError(f"Tavily search failed: {e}")
+        return('No sources found')
 
 
 @traceable()
@@ -60,25 +58,32 @@ def chatbot(state: State):
     except Exception as e:
         raise RuntimeError(f"Chatbot failed: {e}")
 
+
+
 @traceable
 def run_pipeline():
-    try:
-        # Get user input
-        message1 = input("How can I assist you? ").strip()
-        if not message1:
-            raise ValueError("Input cannot be empty.")
+    while(True):
+        try:
+            # Get user input
+            message1 = input("How can I assist you? ").strip()
+            if not message1:
+                raise ValueError("Input cannot be empty.")
 
-        # Format the input into messages
-        messages = format_prompt(message1)
+            # Format the input into messages
+            messages = format_prompt(message1)
 
-        # Get the OpenAI LLM response
-        response = llm.invoke(messages)
+            # Get the OpenAI LLM response
+            response = llm.invoke(messages)
 
-        # Parse and combine outputs from multiple services
-        return parse_output(response)
-    except Exception as e:
-        return f"Pipeline failed: {e}"
+            # Parse and combine outputs from multiple services
+            print(parse_output(response))
+            continue_prompt = input("Do you have any other questions? (y/n): ").strip().lower()
+            if continue_prompt == "n":
+                print("Goodbye!")
+                quit()
 
+        except Exception as e:
+            return f"Pipeline failed: {e}"
 
 
 
@@ -86,11 +91,11 @@ def run_pipeline():
 def parse_output(response):
     try:
         tavily_response = tavilliy_search(response.content)  # Assuming response has a 'content' attribute
-        return f"Response: {response.content} \n Sources: {tavily_response}"
+        print(f"Response: {response.content} \n Sources: {tavily_response}")
     except AttributeError:
-        raise ValueError("Response object is missing a 'content' attribute.")
+            raise ValueError("Response object is missing a 'content' attribute.")
     except Exception as e:
-        raise RuntimeError(f"Error in parsing output: {e}")
+            raise RuntimeError(f"Error in parsing output: {e}")
 
 
 
